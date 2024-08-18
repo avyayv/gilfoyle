@@ -6,4 +6,5 @@ Inspired by https://www.youtube.com/watch?v=Y1gFSENorEY.
 2. Move it to the `data/` folder
 3. Update the paths in `gilfoyle/openai_finetune.py`
 4. Add a `.env` file with `OPENAI_API_KEY=xxx`
+5. `pip install -r requirements.txt`
 5. Run `python -m gilfoyle.openai_finetune`
