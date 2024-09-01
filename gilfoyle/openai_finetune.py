@@ -1,8 +1,8 @@
 from gilfoyle.messenger_folder_parser import MessengerFolderParser
 from openai import OpenAI
-import json
-import os
 from dotenv import load_dotenv
+import jsonlines
+
 
 # Load environment variables
 load_dotenv()
@@ -21,12 +21,10 @@ def create_finetune_file():
     
     # Save training data to 'finetune.jsonl'
     with open(FINETUNE_FILE_PATH, 'w') as f:
-        for item in training_data:
-            f.write(json.dumps(item) + '\n')
+        jsonlines.Writer(f).write_all(training_data)
 
 def start_finetune_job():
-    api_key = os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
+    client = OpenAI()
     
     # Upload the file
     file_response = client.files.create(

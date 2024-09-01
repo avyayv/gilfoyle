@@ -1,5 +1,6 @@
 import json
 from typing import List, Dict, Optional
+from gilfoyle.messenger_data_pruning import MessengerPruner
 
 MAX_MESSAGE_LENGTH = 2000
 
@@ -11,15 +12,16 @@ class MessageJSONParser:
         self.json_file = json_file
         self.system_prompt_file = system_prompt_file
         self.our_name = our_name
-        self.data = None
+        self.data = {}
         self.system_prompt = None
 
     def _read_json(self):
         """
         Reads the JSON file and stores the data in the instance variable.
         """
-        with open(self.json_file, 'r') as file:
-            data = json.load(file)
+        with open(self.json_file, 'r', encoding='utf-8') as file:
+            raw_data = file.read()
+            data = json.loads(raw_data)
         self.data = data
     
     def _read_system_prompt(self):
@@ -41,7 +43,7 @@ class MessageJSONParser:
             return None
 
         return {
-            'text': message['content'],
+            'text': message['content'].encode('latin1').decode('utf8'),
             'sender': message['sender_name']
         }
 
@@ -50,14 +52,14 @@ class MessageJSONParser:
         Parses the messages from the JSON file. Converts them to a format where it is 
         [
             {
-                'text': '...',
-                'sender': '...',
+                'question': '...',
+                'answer': '...',
             }
         ]
 
         """
 
-        if self.data is None:
+        if len(self.data) == 0:
             self._read_json()
         
         if self.system_prompt is None:
@@ -82,6 +84,10 @@ class MessageJSONParser:
             else:
                 clean_messages.append(clean_message)
 
+        # prune these messages
+        pruner = MessengerPruner(data=clean_messages, pruning_system_prompt_file_path='data/pruning_prompt.txt')
+        clean_messages = pruner.prune_data()
+
         return clean_messages
     
     def _get_system_prompt(self):
@@ -102,12 +108,25 @@ class MessageJSONParser:
 
         """
         Formats a message dictionary into the format expected by GPT, assigning roles based on the sender.
-        """
-
-        return {
-            "role": "assistant" if message['sender'] == self.our_name else "user",
-            "content": message['text']
+        
+        Input is: 
+        {
+            'question': '...',
+            'answer': '...'
         }
+
+        """
+        return [ 
+            self._get_system_prompt(), 
+            {
+                "role": "user",
+                "content": message["question"]
+            },
+            {
+                "role": "assistant",
+                "content": message["answer"]
+            }
+        ]
     
     def get_openai_message_format(self):
 
@@ -123,41 +142,15 @@ class MessageJSONParser:
 
         """
 
-        result_messages = [
-            [   
-                self._get_system_prompt()
-            ]
-        ]
+        result_messages = []
         
-        curr_list = 0
-
         clean_messages = self._parse_messages()
 
         for message in clean_messages:
-            if len(result_messages[curr_list]) < MAX_MESSAGE_LENGTH:
-                result_messages[curr_list].append(self._get_gpt_message(message))
-            else:
-                # first add the system prompt
-                result_messages.append([
-                    self._get_system_prompt()
-                ])
-                result_messages[curr_list+1].append(self._get_gpt_message(message))
-                curr_list += 1
+            result_messages.append(self._get_gpt_message(message))
 
-        
-        for conversation in result_messages:
-            # check that the last message is from the assistant
-            if conversation[-1]['role'] != 'assistant':
-                conversation.pop()
+        return result_messages
 
-        return [
-            {
-                "messages": conversation
-            }
-            for conversation in result_messages
-        ]
-            
-
-
-
-
+if __name__ == '__main__':
+    parser = MessageJSONParser('data/your_facebook_activity/messages/inbox/vigneshvaradarajan_1933986433594071/message_1.json', 'data/system_prompt.txt', 'Avyay Varadarajan')
+    print(parser.get_openai_message_format())
