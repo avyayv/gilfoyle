@@ -8,7 +8,7 @@ Currently, this reads all of your messages, asks GPT-4o to filter into good ques
 
 Even with the attempt to increase data quality with filteration, it still kind of sucks, although it does mimic the style pretty decently. Need to see how to get even better quality data to avoid a ton of hallucination.
 
-## Direction
+## Directions
 
 1. First, download all your Messenger chat logs (want a lot of tokens here, so the longer the timeframe the better). https://www.facebook.com/help/messenger-app/713635396288741
 2. Move it to the `data/` folder
