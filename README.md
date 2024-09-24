@@ -10,7 +10,7 @@ Even with the attempt to increase data quality with filteration, it still kind o
 
 ## Directions
 
-1. First, download all your Messenger chat logs (want a lot of tokens here, so the longer the timeframe the better). https://www.facebook.com/help/messenger-app/713635396288741
+1. First, download all your Messenger chat logs (more data is better, because we filter a lot down). https://www.facebook.com/help/messenger-app/713635396288741
 2. Move it to the `data/` folder
 3. Add a system prompt file in `data/system_prompt.txt`
 4. Update the paths in `gilfoyle/openai_finetune.py`
